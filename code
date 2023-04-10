@@ -1,0 +1,224 @@
+import streamlit as st
+from PIL import Image
+import os
+import json
+from streamlit_option_menu import option_menu
+import subprocess
+import plotly.express as px
+import pandas as pd
+import sqlite3
+import requests
+
+import mysql.connector as sql
+
+mydb = sql.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database='pulse'
+
+)
+
+mycursor = mydb.cursor(buffered=True)
+
+
+
+phn = Image.open("C:/Users/91790/Downloads/download.png")
+st.set_page_config(page_title="PhonePe Pulse", page_icon=phn, layout="wide", )
+
+#with st.sidebar:
+SELECT = option_menu(
+    menu_title = None,
+    options = ["About","Map","Home","Aggregate","Top"],
+    icons =["bar-chart","search","house","toggles","at"],
+    default_index=2,
+    orientation="horizontal",
+    styles={
+        "container": {"padding": "0!important", "background-color": "white","size":"cover"},
+        "icon": {"color": "black", "font-size": "20px"},
+        "nav-link": {"font-size": "20px", "text-align": "center", "margin": "-2px", "--hover-color": "#6F36AD"},
+        "nav-link-selected": {"background-color": "#6F36AD"},}
+    )
+if SELECT == "Home":
+    col1,col2, = st.columns(2)
+    col1.image(Image.open("C:/Users/91790/Downloads/phonepe.png"),width = 500)
+    with col1:
+        st.subheader("PhonePe  is an Indian digital payments and financial technology company headquartered in Bengaluru, Karnataka, India. PhonePe was founded in December 2015, by Sameer Nigam, Rahul Chari and Burzin Engineer. The PhonePe app, based on the Unified Payments Interface (UPI), went live in August 2016. It is owned by Flipkart, a subsidiary of Walmart.")
+        st.download_button("DOWNLOAD THE APP NOW", "https://www.phonepe.com/app-download/")
+    with col2:
+        st.video("C:/Users/91790/Downloads/pulse-video.mp4")
+
+if SELECT == "Top":
+    select = st.selectbox("Select the option",["User","Transaction"])
+    if select=="User":
+        mycursor.execute(f"select State, Registered_Users  from top_user ")
+        df = pd.DataFrame(mycursor.fetchall(), columns=['State', 'Registered_Users'])
+        fig = px.pie(df,
+                     values='Registered_Users',
+                     names='State',
+                     title='Top Registered Users',
+
+                     hover_data=['Registered_Users'])
+
+        st.plotly_chart(fig)
+
+    else:
+        mycursor.execute(f"select State, Transaction_count  from top_trans ")
+        df = pd.DataFrame(mycursor.fetchall(), columns=['State', 'Transaction_count'])
+        fig = px.pie(df,
+                     values='Transaction_count',
+                     names='State',
+                     title='Top Transaction count',
+
+                     hover_data=['Transaction_count'])
+
+        st.plotly_chart(fig)
+
+if SELECT=="Aggregate":
+    select = st.selectbox("Select the option", ["Aggregate Transaction", "Aggregate User"])
+    if select== "Aggregate Transaction":
+        mycursor.execute(f"select Transaction_type, Transaction_count  from agg_trans ")
+        df = pd.DataFrame(mycursor.fetchall(), columns=['Transaction_type', 'Transaction_count'])
+        fig = px.bar(df, x="Transaction_type", y="Transaction_count")
+        st.plotly_chart(fig)
+
+    else:
+        mycursor.execute(f"select Brands, Count  from agg_user ")
+        df = pd.DataFrame(mycursor.fetchall(), columns=['Brands', 'Count'])
+        fig = px.bar(df, x="Brands", y="Count")
+        st.plotly_chart(fig)
+
+if SELECT == "About":
+    col1, col2 = st.columns(2)
+    with col1:
+        st.video("C:/Users/91790/Downloads/pulse-video.mp4")
+    with col2:
+        st.image(Image.open("C:/Users/91790/Downloads/download.png"), width=600)
+        st.write("---")
+        st.subheader("The Indian digital payments story has truly captured the world's imagination."
+                     " From the largest towns to the remotest villages, there is a payments revolution being driven by the penetration of mobile phones, mobile internet and state-of-the-art payments infrastructure built as Public Goods championed by the central bank and the government."
+                     " Founded in December 2015, PhonePe has been a strong beneficiary of the API driven digitisation of payments in India. When we started, we were constantly looking for granular and definitive data sources on digital payments in India. "
+                     "PhonePe Pulse is our way of giving back to the digital payments ecosystem.")
+    st.write("---")
+
+
+
+
+
+if SELECT=="Map":
+    select = st.selectbox("Select the option", ["Transaction", "User"])
+
+    if select=="Transaction":
+        mycursor.execute(f"select State,Count from map_trans")
+        df1 = pd.DataFrame(mycursor.fetchall(), columns=['State', 'Count'])
+        # url="https://raw.githubusercontent.com/GSelvakumar/India-States-game/master/states_data.csv"
+        # df2 = pd.read_csv(url)
+        # df1.State = df2["state"]
+        df1["State"].replace("andaman-&-nicobar-islands", "Andaman & Nicobar", inplace=True)
+        df1["State"].replace("andhra-pradesh", "Arunachal Pradesh", inplace=True)
+        df1["State"].replace("arunachal-pradesh", "Andhra Pradesh", inplace=True)
+        df1["State"].replace("west-bengal", "West Bengal", inplace=True)
+        df1["State"].replace("uttar-pradesh", "Uttar Pradesh", inplace=True)
+        df1["State"].replace("tamil-nadu", "Tamil Nadu", inplace=True)
+        df1["State"].replace("madhya-pradesh", "Madhya Pradesh", inplace=True)
+        df1["State"].replace("jammu-&-kashmi", "Jammu & Kashmir", inplace=True)
+        df1["State"].replace("himachal-pradesh", "Himachal Pradesh", inplace=True)
+        df1["State"].replace("dadra-&-nagar-haveli-&-daman-&-diu", "Dadra and Nagar Haveli and Daman and Diu	",
+                             inplace=True)
+        df1["State"].replace("assam", "Assam", inplace=True)
+        df1["State"].replace("chandigarh", "Chandigarh", inplace=True)
+        df1["State"].replace("karnataka", "Karnataka", inplace=True)
+        df1["State"].replace("manipur", "Manipur", inplace=True)
+        df1["State"].replace("meghalaya", "Meghalaya", inplace=True)
+        df1["State"].replace("mizoram", "Mizoram", inplace=True)
+        df1["State"].replace("nagaland", "Nagaland", inplace=True)
+        df1["State"].replace("punjab", "Punjab", inplace=True)
+        df1["State"].replace("rajasthan", "Rajasthan", inplace=True)
+        df1["State"].replace("sikkim", "Sikkim", inplace=True)
+        df1["State"].replace("tripura", "Tripura", inplace=True)
+        df1["State"].replace("uttarakhand", "Uttarakhand", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("bihar", "Bihar", inplace=True)
+        df1["State"].replace("kerala", "Kerala", inplace=True)
+        df1["State"].replace("gujarat", "Gujarat", inplace=True)
+        df1["State"].replace("lakshadweep", "Lakshadweep", inplace=True)
+        df1["State"].replace("odisha", "Odisha", inplace=True)
+        df1["State"].replace("ladakh", "Ladakh", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("delhi", "Delhi", inplace=True)
+        df1["State"].replace("chhattisgarh", "Chhattisgarh", inplace=True)
+        df1["State"].replace("haryana", "Haryana", inplace=True)
+        df1["State"].replace("puducherry", "Puducherry", inplace=True)
+        df1["State"].replace("maharashtra", "Maharashtra", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        fig = px.choropleth(df1,
+                            geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+                            featureidkey='properties.ST_NM',
+                            locations='State',
+                            color='Count')
+
+        fig.update_geos(fitbounds="locations", visible=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+    if select=="User":
+        mycursor.execute(f"select State,Registered_user from map_user")
+        df1 = pd.DataFrame(mycursor.fetchall(), columns=['State', 'Registered_user'])
+        # url="https://raw.githubusercontent.com/GSelvakumar/India-States-game/master/states_data.csv"
+        # df2 = pd.read_csv(url)
+        # df1.State = df2["state"]
+        df1["State"].replace("andaman-&-nicobar-islands", "Andaman & Nicobar", inplace=True)
+        df1["State"].replace("andhra-pradesh", "Arunachal Pradesh", inplace=True)
+        df1["State"].replace("arunachal-pradesh", "Andhra Pradesh", inplace=True)
+        df1["State"].replace("west-bengal", "West Bengal", inplace=True)
+        df1["State"].replace("uttar-pradesh", "Uttar Pradesh", inplace=True)
+        df1["State"].replace("tamil-nadu", "Tamil Nadu", inplace=True)
+        df1["State"].replace("madhya-pradesh", "Madhya Pradesh", inplace=True)
+        df1["State"].replace("jammu-&-kashmi", "Jammu & Kashmir", inplace=True)
+        df1["State"].replace("himachal-pradesh", "Himachal Pradesh", inplace=True)
+        df1["State"].replace("dadra-&-nagar-haveli-&-daman-&-diu", "Dadra and Nagar Haveli and Daman and Diu	",
+                             inplace=True)
+        df1["State"].replace("assam", "Assam", inplace=True)
+        df1["State"].replace("chandigarh", "Chandigarh", inplace=True)
+        df1["State"].replace("karnataka", "Karnataka", inplace=True)
+        df1["State"].replace("manipur", "Manipur", inplace=True)
+        df1["State"].replace("meghalaya", "Meghalaya", inplace=True)
+        df1["State"].replace("mizoram", "Mizoram", inplace=True)
+        df1["State"].replace("nagaland", "Nagaland", inplace=True)
+        df1["State"].replace("punjab", "Punjab", inplace=True)
+        df1["State"].replace("rajasthan", "Rajasthan", inplace=True)
+        df1["State"].replace("sikkim", "Sikkim", inplace=True)
+        df1["State"].replace("tripura", "Tripura", inplace=True)
+        df1["State"].replace("uttarakhand", "Uttarakhand", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("bihar", "Bihar", inplace=True)
+        df1["State"].replace("kerala", "Kerala", inplace=True)
+        df1["State"].replace("gujarat", "Gujarat", inplace=True)
+        df1["State"].replace("lakshadweep", "Lakshadweep", inplace=True)
+        df1["State"].replace("odisha", "Odisha", inplace=True)
+        df1["State"].replace("ladakh", "Ladakh", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("delhi", "Delhi", inplace=True)
+        df1["State"].replace("chhattisgarh", "Chhattisgarh", inplace=True)
+        df1["State"].replace("haryana", "Haryana", inplace=True)
+        df1["State"].replace("puducherry", "Puducherry", inplace=True)
+        df1["State"].replace("maharashtra", "Maharashtra", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        df1["State"].replace("telangana", "Telangana", inplace=True)
+        fig = px.choropleth(df1,
+                            geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+                            featureidkey='properties.ST_NM',
+                            locations='State',
+                            color='Registered_user')
+
+        fig.update_geos(fitbounds="locations", visible=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+
+
+
